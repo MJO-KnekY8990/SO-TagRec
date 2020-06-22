@@ -3,27 +3,21 @@ import pandas as pd
 import re
 import streamlit as st
 from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import TfidfVectorizer
-import gensim
+
 from scipy import sparse
 import nltk
-#nltk.download('stopwords')
-#nltk.download('wordnet')
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
-import warnings
 import pickle
 
+import gensim
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.linear_model import LogisticRegression
 
-sns.set(style='white',context='notebook',palette='deep')
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.simplefilter("ignore")
 
 #Imports
 mlb = pickle.load(open("final_mlb.pkl", 'rb'))
