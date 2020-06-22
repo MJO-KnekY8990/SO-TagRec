@@ -171,5 +171,17 @@ if st.button('Go!'):
     tags = tagging(text,min_num_tags)
     tags_w2v = tag_w2v(tags,min_num_tags)
     
-    st.write('Recommended tags: ',tags)
-    st.write('Related tags to the recommendation: ',tags_w2v)
+    rez1 = ""
+    for w in tags:
+        rez1 = w + " - " + rez1 
+    rez1 = rez1[:-2]
+        
+    rez2 = ""
+    for w in tags_w2v:
+        rez2 = w + " - " + rez2
+    rez2 = rez2[:-2]
+    
+    st.markdown('**Recommended tags:**')
+    st.write(rez1)
+    st.markdown('**Related tags:**')
+    st.write(rez2)
