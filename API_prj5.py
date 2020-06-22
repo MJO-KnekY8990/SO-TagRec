@@ -164,7 +164,7 @@ st.title('Stackoverflow tag recommendation')
 
 title = st.text_input("Title", "Post title")
 body = st.text_area("Body", "Post body", height=350)
-min_num_tags = st.number_input("Minimum number of tags", min_value=2, max_value=5, value=2)
+min_num_tags = st.number_input("Minimum number of tags", min_value=1, max_value=5, value=2)
 
 if st.button('Go!'):
     if (body != "") & (body != "Post body"):
@@ -178,13 +178,13 @@ if st.button('Go!'):
         rez1 = rez1[:-2]
             
         rez2 = ""
-        for w in tags_w2v:
+        for w in tags_w2v[:2*min_num_tags]:
             rez2 = w + " - " + rez2
         rez2 = rez2[:-2]
         
         st.markdown('**Recommended tags:**')
         st.write(rez1)
-        st.markdown('**Related tags:**')
+        st.markdown(2*min_num_tags,'**Related tags:**')
         st.write(rez2)
     else:
         st.write("Write something in the Body")
