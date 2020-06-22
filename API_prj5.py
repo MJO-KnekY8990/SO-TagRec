@@ -7,8 +7,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import gensim
 from scipy import sparse
 import nltk
-nltk.download('stopwords')
-nltk.download('wordnet')
+#nltk.download('stopwords')
+#nltk.download('wordnet')
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
