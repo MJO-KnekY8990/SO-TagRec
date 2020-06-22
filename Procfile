@@ -1,0 +1,1 @@
+web: sh setup.sh && streamlit run API_prj5.py
