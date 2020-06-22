@@ -25,7 +25,7 @@ tfidf = pickle.load(open("final_tfidf.pkl", 'rb'))
 supervised = pickle.load(open("final_supervised.pkl", 'rb'))
 unsupervised = pickle.load(open("final_unsupervised.pkl", 'rb'))
 w2v = pickle.load(open("final_w2v.pkl", 'rb'))
-it_tags_dict = pd.read_csv('test.csv',header=None,dtype='str')[0].values
+it_tags_dict = pd.read_csv('it_dict_syno.csv',header=None,dtype='str')[0].values
 
 class WordReplacer(object):
     def __init__(self, word_map):
