@@ -167,21 +167,24 @@ body = st.text_area("Body", "Post body", height=350)
 min_num_tags = st.number_input("Minimum number of tags", min_value=2, max_value=5, value=2)
 
 if st.button('Go!'):
-    text = text_preparation(title,body)
-    tags = tagging(text,min_num_tags)
-    tags_w2v = tag_w2v(tags,min_num_tags)
-    
-    rez1 = ""
-    for w in tags:
-        rez1 = w + " - " + rez1 
-    rez1 = rez1[:-2]
+    if (body != "") & (body != "Post body"):
+        text = text_preparation(title,body)
+        tags = tagging(text,min_num_tags)
+        tags_w2v = tag_w2v(tags,min_num_tags)
         
-    rez2 = ""
-    for w in tags_w2v:
-        rez2 = w + " - " + rez2
-    rez2 = rez2[:-2]
-    
-    st.markdown('**Recommended tags:**')
-    st.write(rez1)
-    st.markdown('**Related tags:**')
-    st.write(rez2)
+        rez1 = ""
+        for w in tags:
+            rez1 = w + " - " + rez1 
+        rez1 = rez1[:-2]
+            
+        rez2 = ""
+        for w in tags_w2v:
+            rez2 = w + " - " + rez2
+        rez2 = rez2[:-2]
+        
+        st.markdown('**Recommended tags:**')
+        st.write(rez1)
+        st.markdown('**Related tags:**')
+        st.write(rez2)
+    else:
+        st.write("Write something in the Body")
