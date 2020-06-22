@@ -6,4 +6,3 @@ gensim==3.8.3
 bs4==0.0.1
 scipy==1.5.0
 scikit-learn==0.23.1
-site-packages==3.6.1
