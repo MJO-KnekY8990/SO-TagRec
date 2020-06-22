@@ -184,7 +184,7 @@ if st.button('Go!'):
         
         st.markdown('**Recommended tags:**')
         st.write(rez1)
-        to_print = '** ' + str(2*min_num_tags) + 'Related tags** (if possible):'
+        to_print = '**' + str(2*min_num_tags) + ' Related tags** (if possible):'
         st.markdown(to_print)
         st.write(rez2)
     else:
