@@ -166,7 +166,7 @@ st.title('Stackoverflow tag recommendation')
 
 title = st.text_input("Title", "Post title")
 body = st.text_area("Body", "Post body", height=350)
-min_num_tags = st.number_input("Minimum number of tags", min_value=1, max_value=5, value=2)
+min_num_tags = st.number_input("Minimum number of tags (the more you ask for, the less relevant they might be)", min_value=1, max_value=5, value=2)
 
 if st.button('Go!'):
     if (body != "") & (body != "Post body"):
