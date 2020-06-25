@@ -105,11 +105,11 @@ def tagging(text,text_lem,number_of_tags):
     wtext = wstokenize(text)
     
     #tagz_from_model
-    threshold = 0.303
+    threshold = 0.265
     tagz_from_model = supervised.predict_proba(text_tfv)
     tagz_from_model = (tagz_from_model>threshold).astype('int')
     if np.sum(tagz_from_model) < 1:
-        threshold = np.max(supervised.predict_proba(text_tfv))*.89
+        threshold = np.sort(supervised.predict_proba(text_tfv))[0][-num]-1e-10
         tagz_from_model = supervised.predict_proba(text_tfv)
         tagz_from_model = (tagz_from_model>threshold).astype('int')
     tagz_from_model = mlb.inverse_transform(sparse.csr_matrix(tagz_from_model))[0]
