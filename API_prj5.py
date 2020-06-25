@@ -12,7 +12,7 @@ from nltk.stem import WordNetLemmatizer
 import pickle
 
 import gensim
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -21,6 +21,7 @@ from sklearn.linear_model import LogisticRegression
 
 #Imports
 mlb = pickle.load(open("final_mlb.pkl", 'rb'))
+tfvec = pickle.load(open("final_tfvect.pkl", 'rb'))
 tfidf = pickle.load(open("final_tfidf.pkl", 'rb'))
 supervised = pickle.load(open("final_supervised.pkl", 'rb'))
 unsupervised = pickle.load(open("final_unsupervised.pkl", 'rb'))
@@ -50,15 +51,14 @@ def text_preparation(txt_title, txt_body):
     sw = set()
     sw.update(words_to_remove)
     sw.update(tuple(stopwords.words('english')))
-    to_space = re.compile('[/(){}\[\]\|\@,;:.-_]')
-    to_keep_ = re.compile('[^a-z #+]')
+    to_space = re.compile('[/(){}\[\]\|\@,;:\-_\*]')
+    to_keep_ = re.compile('[^a-z #+.]')
     to_remove = list(sw)
     
-    text = BeautifulSoup(text).get_text()
     text = text.lower()
     text = re.sub("\\n"," ",text)
-    text = re.sub(r'^https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'^http?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)', '', text, flags=re.MULTILINE)
+    text = re.sub(r'http?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)', '', text, flags=re.MULTILINE)
     text = " ".join([str(replacer.replace(words)) for words in text.split()])
     text = re.sub(to_space," ",text)
     text = re.sub(to_keep_," ",text)
@@ -66,9 +66,9 @@ def text_preparation(txt_title, txt_body):
     text = re.sub("\. "," ",text)
     text = " ".join([words for words in text.split() if (words not in to_remove) and (len(words)>1)])
     
-    text = lemmatizer.lemmatize(text)
+    text_l = lemmatizer.lemmatize(text)
     
-    return (text)
+    return (text, text_l)
 
 def wstokenize(text):
     return nltk.WhitespaceTokenizer().tokenize(text)
@@ -89,25 +89,27 @@ def show_topics(vectorizer, lda_model, n_words=20):
         topic_keywords.append(keywords.take(top_keyword_locs))
     return topic_keywords
 
-topic_keywords = show_topics(vectorizer=tfidf, lda_model=unsupervised, n_words=20)        
+topic_keywords = show_topics(vectorizer=tfvec, lda_model=unsupervised, n_words=20)        
 
 # Topic - Keywords Dataframe
 df_topic_keywords = pd.DataFrame(topic_keywords)
 df_topic_keywords.columns = ['Word '+str(i+1) for i in range(df_topic_keywords.shape[1])]
 df_topic_keywords.index = ['Topic '+str(i+1) for i in range(df_topic_keywords.shape[0])]
 
-def tagging(text,number_of_tags):
-    #tfv
-    text_tfv = tfidf.transform([text])
+def tagging(text,text_lem,number_of_tags):
+    #tf_vect
+    text_vect = tfvec.transform([text])
+    #tfidf
+    text_tfv = tfidf.transform([text_lem])
     #whitespace token
     wtext = wstokenize(text)
     
     #tagz_from_model
-    threshold = 0.322
+    threshold = 0.303
     tagz_from_model = supervised.predict_proba(text_tfv)
     tagz_from_model = (tagz_from_model>threshold).astype('int')
     if np.sum(tagz_from_model) < 1:
-        threshold = np.max(supervised.predict_proba(text_tfv))*.88
+        threshold = np.max(supervised.predict_proba(text_tfv))*.89
         tagz_from_model = supervised.predict_proba(text_tfv)
         tagz_from_model = (tagz_from_model>threshold).astype('int')
     tagz_from_model = mlb.inverse_transform(sparse.csr_matrix(tagz_from_model))[0]
@@ -118,7 +120,7 @@ def tagging(text,number_of_tags):
         tagz_from_it = list(pd.Series(tagz_from_it).value_counts()[:number_of_tags].index)
     
     #tagz_from_topics
-    tagz_from_topics = df_topic_keywords.iloc[np.argmax(unsupervised.transform(text_tfv))].values
+    tagz_from_topics = df_topic_keywords.iloc[np.argmax(unsupervised.transform(text_vect))].values
     temp = []
     for w in it_tags_dict:
         if (len(temp)<number_of_tags) & (w in tagz_from_topics):
@@ -168,8 +170,8 @@ min_num_tags = st.number_input("Minimum number of tags", min_value=1, max_value=
 
 if st.button('Go!'):
     if (body != "") & (body != "Post body"):
-        text = text_preparation(title,body)
-        tags = tagging(text,min_num_tags)
+        text, text_lem = text_preparation(title,body)
+        tags = tagging(text,text_lem,min_num_tags)
         tags_w2v = tag_w2v(tags,min_num_tags)
         
         rez1 = ""
