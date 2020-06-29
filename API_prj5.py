@@ -102,49 +102,39 @@ def tagging(text,text_lem,number_of_tags):
     #tfidf
     text_tfv = tfidf.transform([text_lem])
     #whitespace token
-    wtext = wstokenize(text)
+    wtext = wstokenize(text_lem)
     
     #tagz_from_model
     threshold = 0.265
     tagz_from_model = supervised.predict_proba(text_tfv)
     tagz_from_model = (tagz_from_model>threshold).astype('int')
     if np.sum(tagz_from_model) < 1:
-        threshold = np.sort(supervised.predict_proba(text_tfv))[0][-num]-1e-10
-        tagz_from_model = supervised.predict_proba(text_tfv)
-        tagz_from_model = (tagz_from_model>threshold).astype('int')
-    tagz_from_model = mlb.inverse_transform(sparse.csr_matrix(tagz_from_model))[0]
-    
-    #tagz_from_it
-    tagz_from_it = list([words for words in wtext if words in it_tags_dict])
-    if len(tagz_from_it) > 0:
-        tagz_from_it = list(pd.Series(tagz_from_it).value_counts()[:number_of_tags].index)
-    
-    #tagz_from_topics
-    tagz_from_topics = df_topic_keywords.iloc[np.argmax(unsupervised.transform(text_vect))].values
-    temp = []
-    for w in it_tags_dict:
-        if (len(temp)<number_of_tags) & (w in tagz_from_topics):
-            temp.append(w)
-    tagz_from_topics = temp
-
-    rez_tagz = tagz_from_model
-    tagz_from_others=[]
-    if len(tagz_from_it) > 0:
-        for w in tagz_from_it:
-            tagz_from_others.append(w)
-
-    if len(tagz_from_topics) > 0:
-        for w in tagz_from_topics:
-            tagz_from_others.append(w)
+        rez = pd.DataFrame(index=["tag","value"])
+        #tagz_from_it
+        tagz_from_it = list([words for words in wtext if words in it_tags_dict])
+        if len(tagz_from_it) > 0:
+            for tag in tagz_from_it:
+                ind = rez.shape[1]
+                rez.at["tag",ind] = tag
+                rez.at["value",ind] = 0.3194
+        
+        #tagz_from_topics
+        tagz_from_topics = df_topic_keywords.iloc[np.argmax(unsupervised.transform(text_vect))].values
+        temp = []
+        for w in it_tags_dict:
+            if w in tagz_from_topics:
+                temp.append(w)
+        tagz_from_topics = temp
+        for n, tag in enumerate(tagz_from_topics):
+            ind = rez.shape[1]
+            rez.at["tag",ind] = tag
+            rez.at["value",ind] = 0.0976 - 1e-5*n
             
-    rez_tagz = list(rez_tagz)
-    if len(tagz_from_others) > 0:
-        tagz_from_others = list(pd.Series(tagz_from_others).value_counts().index)
-        for w in tagz_from_others:
-            if (w not in rez_tagz) & (len(rez_tagz)<number_of_tags):
-                rez_tagz.append(w)
-
-    return(rez_tagz)
+        return(list(rez.T.groupby("tag").sum().sort_values(by="value",ascending=False).index)[:number_of_tags])
+        
+    else:
+        tagz_from_model = mlb.inverse_transform(sparse.csr_matrix(tagz_from_model))[0]
+        return(tagz_from_model)
 
 def tag_w2v(tagz,number_reco):
     #word2vec
@@ -166,7 +156,7 @@ st.title('Stackoverflow tag recommendation')
 
 title = st.text_input("Title", "Post title")
 body = st.text_area("Body", "Post body", height=350)
-min_num_tags = st.number_input("Minimum number of tags (the more you ask for, the less relevant they might be)", min_value=1, max_value=5, value=2)
+min_num_tags = st.number_input("Minimum number of tags (the more you ask for, the less relevant they might be)", min_value=1, max_value=5, value=1)
 
 if st.button('Go!'):
     if (body != "") & (body != "Post body"):
@@ -180,7 +170,10 @@ if st.button('Go!'):
         rez1 = rez1[:-2]
             
         rez2 = ""
-        for w in tags_w2v[:2*min_num_tags]:
+        x = 2*min_num_tags
+        if x < 4:
+            x = 4
+        for w in tags_w2v[:x]:
             rez2 = w + " - " + rez2
         rez2 = rez2[:-2]
         
