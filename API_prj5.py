@@ -162,7 +162,10 @@ if st.button('Go!'):
     if (body != "") & (body != "Post body"):
         text, text_lem = text_preparation(title,body)
         tags = tagging(text,text_lem,min_num_tags)
-        tags_w2v = tag_w2v(tags,min_num_tags)
+        x = 2*min_num_tags
+        if x < 4:
+            x = 4
+        tags_w2v = tag_w2v(tags,x)
         
         rez1 = ""
         for w in tags:
@@ -170,16 +173,13 @@ if st.button('Go!'):
         rez1 = rez1[:-2]
             
         rez2 = ""
-        x = 2*min_num_tags
-        if x < 4:
-            x = 4
         for w in tags_w2v[:x]:
             rez2 = w + " - " + rez2
         rez2 = rez2[:-2]
         
         st.markdown('**Recommended tags:**')
         st.write(rez1)
-        to_print = '**' + str(2*min_num_tags) + ' Related tags** (if possible):'
+        to_print = '**' + str(x) + ' Related tags** (if possible):'
         st.markdown(to_print)
         st.write(rez2)
     else:
