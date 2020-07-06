@@ -26,7 +26,7 @@ tfidf = pickle.load(open("final_tfidf.pkl", 'rb'))
 supervised = pickle.load(open("final_supervised.pkl", 'rb'))
 unsupervised = pickle.load(open("final_unsupervised.pkl", 'rb'))
 w2v = pickle.load(open("final_w2v.pkl", 'rb'))
-it_tags_dict = pd.read_csv('it_dict_syno.csv',header=None,dtype='str')[0].values
+it_tags_dict = pd.read_csv('it_dict_syno.csv', header=None, dtype='str')[0].values
 
 class WordReplacer(object):
     def __init__(self, word_map):
@@ -56,15 +56,15 @@ def text_preparation(txt_title, txt_body):
     to_remove = list(sw)
     
     text = text.lower()
-    text = re.sub("\\n"," ",text)
+    text = re.sub("\\n", " ", text)
     text = re.sub(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)', '', text, flags=re.MULTILINE)
     text = re.sub(r'http?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)', '', text, flags=re.MULTILINE)
     text = " ".join([str(replacer.replace(words)) for words in text.split()])
-    text = re.sub(to_space," ",text)
-    text = re.sub(to_keep_," ",text)
-    text = re.sub("\.\n"," ",text)
-    text = re.sub("\. "," ",text)
-    text = " ".join([words for words in text.split() if (words not in to_remove) and (len(words)>1)])
+    text = re.sub(to_space, " ", text)
+    text = re.sub(to_keep_, " ", text)
+    text = re.sub("\.\n", " ", text)
+    text = re.sub("\. ", " ", text)
+    text = " ".join([words for words in text.split() if (words not in to_remove) and (len(words) >1 )])
     
     text_l = lemmatizer.lemmatize(text)
     
@@ -85,7 +85,7 @@ def show_topics(vectorizer, lda_model, n_words=20):
                 if keywords[ind] in it_tags_dict:
                     topic_words_in_it.append(ind)
         top_keyword_locs = topic_words_in_it
-        #top_keyword_locs = (-topic_weights).argsort()[:n_words]
+        # top_keyword_locs = (-topic_weights).argsort()[:n_words]
         topic_keywords.append(keywords.take(top_keyword_locs))
     return topic_keywords
 
@@ -107,16 +107,16 @@ def tagging(text,text_lem,number_of_tags):
     #tagz_from_model
     threshold = 0.265
     tagz_from_model = supervised.predict_proba(text_tfv)
-    tagz_from_model = (tagz_from_model>threshold).astype('int')
+    tagz_from_model = (tagz_from_model > threshold).astype('int')
     if np.sum(tagz_from_model) < 1:
-        rez = pd.DataFrame(index=["tag","value"])
+        rez = pd.DataFrame(index=["tag", "value"])
         #tagz_from_it
         tagz_from_it = list([words for words in wtext if words in it_tags_dict])
         if len(tagz_from_it) > 0:
             for tag in tagz_from_it:
                 ind = rez.shape[1]
-                rez.at["tag",ind] = tag
-                rez.at["value",ind] = 0.3194
+                rez.at["tag", ind] = tag
+                rez.at["value", ind] = 0.3194
         
         #tagz_from_topics
         tagz_from_topics = df_topic_keywords.iloc[np.argmax(unsupervised.transform(text_vect))].values
@@ -130,7 +130,7 @@ def tagging(text,text_lem,number_of_tags):
             rez.at["tag",ind] = tag
             rez.at["value",ind] = 0.0976 - 1e-5*n
             
-        return(list(rez.T.groupby("tag").sum().sort_values(by="value",ascending=False).index)[:number_of_tags])
+        return(list(rez.T.groupby("tag").sum().sort_values(by="value", ascending=False).index)[:number_of_tags])
         
     else:
         tagz_from_model = mlb.inverse_transform(sparse.csr_matrix(tagz_from_model))[0]
@@ -142,7 +142,7 @@ def tag_w2v(tagz,number_reco):
     for u, w in enumerate(tagz):
         reco=[]
         if w in w2v.wv.vocab:
-            for i, j in w2v.wv.most_similar(w,topn=len(it_tags_dict)):
+            for i, j in w2v.wv.most_similar(w, topn=len(it_tags_dict)):
                 if i in it_tags_dict:
                     reco.append(i)
             for l in range(len(reco[:number_reco])):
@@ -162,10 +162,7 @@ if st.button('Go!'):
     if (body != "") & (body != "Post body"):
         text, text_lem = text_preparation(title,body)
         tags = tagging(text,text_lem,min_num_tags)
-        x = 2*min_num_tags
-        if x < 4:
-            x = 4
-        tags_w2v = tag_w2v(tags,x)
+        tags_w2v = tag_w2v(tags,min_num_tags)
         
         rez1 = ""
         for w in tags:
@@ -173,13 +170,16 @@ if st.button('Go!'):
         rez1 = rez1[:-2]
             
         rez2 = ""
+        x = 2*min_num_tags
+        if x < 4:
+            x = 4
         for w in tags_w2v[:x]:
             rez2 = w + " - " + rez2
         rez2 = rez2[:-2]
         
         st.markdown('**Recommended tags:**')
         st.write(rez1)
-        to_print = '**' + str(x) + ' Related tags** (if possible):'
+        to_print = '**' + str(2*min_num_tags) + ' Related tags** (if possible):'
         st.markdown(to_print)
         st.write(rez2)
     else:
